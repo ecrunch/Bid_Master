@@ -3,14 +3,20 @@ import pandas as pd
 
 class RoomPicker(object):
 
-    def __init__(self, roommates, total_rent):
-        self.roommates = roommates
-        random.shuffle(self.roommates)
-        self.total_rent = total_rent
-        indiv_rent = total_rent / len(self.roommates)
-        rooms_list = [[room_num + 1, roommate, indiv_rent] for room_num, roommate in enumerate(self.roommates)]
+    def __init__(self, roommates, total_rent,old,old_list,turn):
+        if old:
+            self.roommates = roommates
+            self.total_rent = total_rent
+            self.turn = turn
+            rooms_list = old_list
+        else:
+            self.roommates = roommates
+            random.shuffle(self.roommates)
+            self.total_rent = total_rent
+            indiv_rent = total_rent / len(self.roommates)
+            rooms_list = [[room_num + 1, roommate, indiv_rent] for room_num, roommate in enumerate(self.roommates)]
+            self.turn = 0
         self.rooms_df = pd.DataFrame(rooms_list, columns=["room_number", "roommate", "rent"]).set_index("room_number")
-        self.turn = 0
         self.pass_count = 0
 
     def _get_room_number(self, roommate):

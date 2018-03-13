@@ -1,4 +1,315 @@
-<form method="POST" action="/">
+<!DOCTYPE html>
+<html lang="en" ng-app="myApp">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Star Hammer</title>
+
+
+    <link href="static/css/bootstrap.min.css" rel="stylesheet">
+
+
+    <link href="static/css/jumbotron-narrow.css" rel="stylesheet">
+
+    <script src="static/js/angular.js"></script>
+
+    <script>
+    	angular.module('myApp', [])
+            .controller('HomeCtrl', function($scope, $http) {
+                $scope.info = {};
+
+                $scope.showData = function(){
+                	console.log("Here in controller")
+                    $http({
+                        method: 'POST',
+                        url: '/getAllData',
+                    }).then(function(response) {
+                        $scope.datas = response.data;
+                        console.log($scope.datas);
+                    }, function(error) {
+                        console.log(error);
+                    });
+                }
+
+                $scope.addData = function(){   
+                    $http({
+                        method: 'POST',
+                        url: '/addData',
+                        data: {info:$scope.info}
+                    }).then(function(response) {
+                        $scope.showData();
+                        $('#addPopUp').modal('hide')
+                        $scope.info = {}
+                    }, function(error) {
+                        console.log(error);
+                    });
+                }
+
+                $scope.switchView = function(){
+                	$scope.sview ^= true;
+                }
+
+                $scope.newData = function(info){
+                    $scope.info = info;
+                    
+                    $scope.showAdd = false;
+                    $scope.switchView();
+                    $http({
+                        method: 'POST',
+                        url: '/getData',
+                        data: {info:$scope.info}
+                    }).then(function(response) {
+                        console.log(response.data['bidder_name']);
+                        $scope.bid_tables = response.data['rooms'];
+                        $scope.bidder_name = response.data['bidder_name'];
+                        $scope.turn = response.data['turn'];
+                        // $('#addPopUp').modal('show')
+                    }, function(error) {
+                        console.log(error);
+                    });
+                }
+
+                $scope.reloadData = function(info,bid_tables,turn){
+                    test = {"bid_tables":$scope.bid_tables,"turn":$scope.turn,"info":$scope.info}
+                    
+                    console.log(test)
+                    $scope.info = test;
+
+                    
+                    $scope.showAdd = false;
+                    $http({
+                        method: 'POST',
+                        url: '/newData',
+                        data: {info:$scope.info}
+                    }).then(function(response) {
+                        console.log(response.data);
+                        $('#bidWindow').modal('hide');
+                        $scope.bid_tables = response.data['rooms'];
+                        $scope.bidder_name = response.data['bidder_name'];
+                        $scope.turn = response.data['turn'];
+                        
+                        // $('#addPopUp').modal('show')
+                    }, function(error) {
+                        console.log(error);
+                    });
+                }
+
+                 $scope.passData = function(info,bid_tables,turn){
+                    test = {"bid_tables":$scope.bid_tables,"turn":$scope.turn,"info":$scope.info}
+                    
+                    console.log(test)
+                    $scope.info = test;
+
+                    
+                    $scope.showAdd = false;
+                    $http({
+                        method: 'POST',
+                        url: '/passData',
+                        data: {info:$scope.info}
+                    }).then(function(response) {
+                        console.log(response.data);
+                        $scope.bid_tables = response.data['rooms'];
+                        $scope.bidder_name = response.data['bidder_name'];
+                        $scope.turn = response.data['turn'];
+                        
+                        // $('#addPopUp').modal('show')
+                    }, function(error) {
+                        console.log(error);
+                    });
+                }
+
+                $scope.getName = function(info){
+                    $scope.info = info;
+                   
+                    $http({
+                        method: 'POST',
+                        url: '/getName',
+                        data: {info:$scope.info}
+                    }).then(function(response) {
+                        console.log(response);
+                        $scope.name = response.data;
+                    }, function(error) {
+                        console.log(error);
+                    });
+                }
+
+                $scope.showAddPopUp = function(){
+                    $scope.showAdd = true;
+                    $scope.info = {};
+                    $('#addPopUp').modal('show')
+                }
+
+                $scope.showbidWindowUp = function(){
+                    $scope.showAdd = true;
+                    $scope.info = {};
+                    $('#bidWindow').modal('show')
+                }
+
+
+              $scope.showData();
+            })  
+
+    </script>
+
+</head>
+
+<body ng-controller="HomeCtrl">
+
+    <div class="container">
+        <div class="header clearfix">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                	<li></li>
+                	<li><h3 class="text-muted"></h3></li>
+                    <li role="presentation" class="active"><a href="#" data-toggle="modal" ng-show="!sview" ng-click="showAddPopUp()">New Bid List</a></li>
+                    <li role="presentation" class="active"><a href="#" data-toggle="modal" ng-show="sview" ng-click="showbidWindowUp()">Bid</a></li>
+                    <li role="presentation" class="active"><a href="#" data-toggle="modal" ng-show="sview" ng-click="passData()">Pass</a></li>
+                    <li role="presentation" class="active"><a href="#" data-toggle="modal" ng-show="sview" ng-click="switchView()">Back</a></li>
+                </ul>
+            </nav>
+            <h3 class="text-muted" ng-show="sview"> Bidder: {{ '{{bidder_name}}' }}</h3>
+            <h3 class="text-muted" ng-show="!sview">Bid Master</h3>
+        </div>
+
+        <div class="bs-example" ng-show="sview" data-example-id="panel-without-body-with-table">
+            <div class="panel panel-default">
+                <div class="panel-heading">Bid List</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                        	<th></th>
+                            <th>Room</th>
+                            <th></th>
+                            <th>Owner</th>
+                            <th></th>
+                            <th>Price</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="bid_table in bid_tables track by $index">
+                            <td></td>
+                            <td></td>
+                            <th scope="row">{{'{{$index+1}}'}} ></th>
+                            <td></td>
+                            <td>{{ '{{bid_table.roommate}}' }}</td>
+                            <td></td>
+                            <td>{{ '{{bid_table.rent}}' }}</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bs-example" ng-show="!sview" data-example-id="panel-without-body-with-table">
+            <div class="panel panel-default">
+                <div class="panel-heading">Old Bids</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Bid Name</th>
+                            <th>Members</th>
+                            <th>Total Price</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="datat in datas track by $index">
+                            <th scope="row">{{'{{$index+1}}'}} ></th>
+                            <td>{{ '{{datat.bid_name}}' }}</td>
+                            <td>{{ '{{datat.members}}' }}</td>
+                            <td>{{ '{{datat.total}}' }}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><span style="cursor:pointer;color:#3c763d;" class="glyphicon glyphicon-play" ng-click="newData(datat)" aria-hidden="true"></span></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="addPopUp" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel" >Test</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="bid_name" class="control-label">Bid Name:</label>
+                            <input type="text" class="form-control" ng-model="info.bid_name" id="txtDevice">
+                        </div>
+                        <div class="form-group">
+                            <label for="Total" class="control-label">Total:</label>
+                            <input type="text" class="form-control" ng-model="info.total" id="txtIP">
+                        </div>
+                        <div class="form-group">
+                            <label for="Members" class="control-label">Members:</label>
+                            <input type="text" class="form-control" ng-model="info.members" id="txtIP">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"  class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button ng-show="!showAdd" id="btnAdd" ng-click="addData()" type="button" class="btn btn-primary">Update Data</button> 
+                    <button ng-show="showAdd" id="btnAdd" ng-click="addData()" type="button" class="btn btn-primary">Add Bid</button>   
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="bidWindow" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel" >Test</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="bid_name" class="control-label">Room:</label>
+                            <input type="text" class="form-control" ng-model="info.bid_name" id="txtDevice">
+                        </div>
+                        <div class="form-group">
+                            <label for="Total" class="control-label">Bid:</label>
+                            <input type="text" class="form-control" ng-model="info.total" id="txtIP">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"  class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button ng-show="!showAdd" id="btnAdd" ng-click="reloadData()" type="button" class="btn btn-primary">Update Data</button> 
+                    <button ng-show="showAdd" id="btnAdd" ng-click="reloadData()" type="button" class="btn btn-primary">Add Bid</button>   
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- <form method="POST" action="/">
     {{ form.bid_bool.label }} {{ form.bid_bool(size=20) }}
     {{ form.room_choice.label }} {{ form.room_choice(size=20) }}
     {{ form.rent_choice.label }} {{ form.rent_choice(size=20) }}
@@ -6,4 +317,7 @@
     <h3>{{myexcept}}</h3>
     <h2>{{whos_up}}</h2>
     {{ html_data|safe }}
-</form>
+</form> -->
+    <script src="static/js/jquery.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+</body>	
